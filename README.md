@@ -1,2 +1,2 @@
 # Lesson_18_GMapExperience
-Under construction. Coming soon. 
+Android Google Map Tutorial Example. Under construction. Coming soon. 
