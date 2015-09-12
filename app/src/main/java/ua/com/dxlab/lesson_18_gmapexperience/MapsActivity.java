@@ -67,5 +67,6 @@ public class MapsActivity extends FragmentActivity {
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(48.62430001,22.2920537), 14));
         mMap.addMarker(new MarkerOptions().position(new LatLng(48.62430001,22.2920537)).title("Here we are"));
+
     }
 }
