@@ -7,16 +7,17 @@ import android.os.Bundle;
 /**
  * Created by Dima on 12.09.2015.
  */
-public class CustomLocationListener  implements LocationListener {
+public class CustomLocationListener implements LocationListener {
 
     private MapsActivity mMapsActivity;
 
-    public CustomLocationListener(MapsActivity mapsActivity) {
+    public CustomLocationListener(MapsActivity _mapsActivity) {
+        this.mMapsActivity = _mapsActivity;
     }
 
     @Override
     public void onLocationChanged(Location location) {
-
+        mMapsActivity.setCurrentLocation(location);
     }
 
     @Override

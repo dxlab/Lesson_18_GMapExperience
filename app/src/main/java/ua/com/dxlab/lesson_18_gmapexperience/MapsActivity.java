@@ -10,6 +10,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -20,13 +21,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapsActivity extends FragmentActivity {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private CustomLocationListener mCustomLocationListener;
+    private LocationManager mLocationManager;
+    private Location mLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        setLocationServices();
-
+        mCustomLocationListener = new CustomLocationListener(this);
         setUpMapIfNeeded();
     }
 
@@ -77,6 +80,8 @@ public class MapsActivity extends FragmentActivity {
      * method in {@link #onResume()} to guarantee that it will be called.
      */
     private void setUpMapIfNeeded() {
+        setLocationServices();
+
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
@@ -101,16 +106,27 @@ public class MapsActivity extends FragmentActivity {
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setMyLocationEnabled(true);
 
-        LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        String provider = service.getBestProvider(criteria, false);
-        Location location = service.getLastKnownLocation(provider);
-        LatLng userLocation = new LatLng(location.getLatitude(),location.getLongitude());
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 14));
-        mMap.addMarker(new MarkerOptions().position(userLocation).title("Here we are"));
-
-
+        if (mLocation!=null) {
+            LatLng userLocation = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 14));
+        }
+       // mMap.addMarker(new MarkerOptions().position(userLocation).title("Here we are"));
 
     }
+
+    public void setCurrentLocation(Location location) {
+        if (location != null) {
+            Log.d("tag", "Lat: " + location.getLatitude() + "\n" +
+                    "Lng: " + location.getLongitude());
+
+            mLocation = location;
+            LatLng userLocation = new LatLng(location.getLatitude(),location.getLongitude());
+            setMarker(userLocation,"Here we are");
+        }
+    }
+
+    private void setMarker(LatLng _latLng, String _title){
+        mMap.addMarker(new MarkerOptions().position(_latLng).title(_title));
+    }
+
 }
