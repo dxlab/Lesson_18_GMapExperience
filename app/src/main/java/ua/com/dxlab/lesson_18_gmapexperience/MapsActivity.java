@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -36,35 +37,19 @@ public class MapsActivity extends FragmentActivity {
         setUpMapIfNeeded();
     }
 
-    /**
-     * Get Location Manager and check for GPS & Network location services
-     */
-
-    private void setLocationServices() {
-        LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if(!lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                !lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            // Build the alert dialog
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Location Services Not Active");
-            builder.setMessage("Please enable Location Services and GPS");
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    // Show location settings when the user acknowledges the alert dialog
-                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    startActivity(intent);
-                }
-            });
-            Dialog alertDialog = builder.create();
-            alertDialog.setCanceledOnTouchOutside(false);
-            alertDialog.show();
-        }
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
+        Log.d("maptag", "onResume");
+        mLocation  = mMap.getMyLocation();
+        if (mLocation!=null) {
+            double latitude = mLocation.getLatitude();
+            double longitude = mLocation.getLongitude();
+            LatLng latLng = new LatLng(latitude, longitude);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+        }
     }
 
     /**
@@ -83,8 +68,6 @@ public class MapsActivity extends FragmentActivity {
      * method in {@link #onResume()} to guarantee that it will be called.
      */
     private void setUpMapIfNeeded() {
-        setLocationServices();
-
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
@@ -109,29 +92,21 @@ public class MapsActivity extends FragmentActivity {
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setMyLocationEnabled(true);
 
-        if (mLocation!=null){
-            double latitude = mLocation.getLatitude();
-            double longitude = mLocation.getLongitude();
-            LatLng userLocation = new LatLng(latitude, longitude);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 14));
-        }
 
 
     }
 
     public void setCurrentLocation(Location location) {
         if (location != null) {
-            double latitude = location.getLatitude();
-            double longitude = location.getLongitude();
 
-                Log.d("tag", "Lat: " + latitude + "\n" +
-                        "Lng: " + longitude);
+            Log.d("maptag", "Lat: " + location.getLatitude() + "\n" +
+                    "Lng: " + location.getLongitude());
 
-                mLocation = location;
+            mLocation = location;
         }
     }
 
-    private void setMarker(LatLng _latLng, String _title){
+    private void setMarker(LatLng _latLng, String _title) {
         mMap.addMarker(new MarkerOptions().position(_latLng).title(_title));
     }
 
@@ -146,4 +121,5 @@ public class MapsActivity extends FragmentActivity {
         super.onStop();
         mLocationManager.removeUpdates(mCustomLocationListener);
     }
+
 }
