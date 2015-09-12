@@ -3,6 +3,7 @@ package ua.com.dxlab.lesson_18_gmapexperience;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.util.Log;
 
 /**
  * Created by Dima on 12.09.2015.
@@ -34,4 +35,5 @@ public class CustomLocationListener implements LocationListener {
     public void onProviderDisabled(String provider) {
 
     }
+
 }
