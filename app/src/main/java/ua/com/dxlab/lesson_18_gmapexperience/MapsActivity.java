@@ -3,6 +3,7 @@ package ua.com.dxlab.lesson_18_gmapexperience;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -60,6 +61,11 @@ public class MapsActivity extends FragmentActivity {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        // Setting the build-in zoom control buttons
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(48.62430001,22.2920537), 14));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(48.62430001,22.2920537)).title("Here we are"));
     }
 }
