@@ -1,7 +1,15 @@
 package ua.com.dxlab.lesson_18_gmapexperience;
 
-import android.support.v4.app.FragmentActivity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v4.app.FragmentActivity;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -17,7 +25,34 @@ public class MapsActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        setLocationServices();
+
         setUpMapIfNeeded();
+    }
+
+    /**
+     * Get Location Manager and check for GPS & Network location services
+     */
+
+    private void setLocationServices() {
+        LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if(!lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                !lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            // Build the alert dialog
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Location Services Not Active");
+            builder.setMessage("Please enable Location Services and GPS");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    // Show location settings when the user acknowledges the alert dialog
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                }
+            });
+            Dialog alertDialog = builder.create();
+            alertDialog.setCanceledOnTouchOutside(false);
+            alertDialog.show();
+        }
     }
 
     @Override
@@ -63,10 +98,19 @@ public class MapsActivity extends FragmentActivity {
     private void setUpMap() {
         // Setting the build-in zoom control buttons
         mMap.getUiSettings().setZoomControlsEnabled(true);
-
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(48.62430001,22.2920537), 14));
-        mMap.addMarker(new MarkerOptions().position(new LatLng(48.62430001,22.2920537)).title("Here we are"));
+        mMap.setMyLocationEnabled(true);
+
+        LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        String provider = service.getBestProvider(criteria, false);
+        Location location = service.getLastKnownLocation(provider);
+        LatLng userLocation = new LatLng(location.getLatitude(),location.getLongitude());
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 14));
+        mMap.addMarker(new MarkerOptions().position(userLocation).title("Here we are"));
+
+
 
     }
 }
