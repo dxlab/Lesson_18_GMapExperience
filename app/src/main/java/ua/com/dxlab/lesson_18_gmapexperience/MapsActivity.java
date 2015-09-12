@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -108,22 +109,25 @@ public class MapsActivity extends FragmentActivity {
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setMyLocationEnabled(true);
 
-        if (mLocation!=null) {
-            LatLng userLocation = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+        if (mLocation!=null){
+            double latitude = mLocation.getLatitude();
+            double longitude = mLocation.getLongitude();
+            LatLng userLocation = new LatLng(latitude, longitude);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 14));
         }
-       // mMap.addMarker(new MarkerOptions().position(userLocation).title("Here we are"));
+
 
     }
 
     public void setCurrentLocation(Location location) {
         if (location != null) {
-            Log.d("tag", "Lat: " + location.getLatitude() + "\n" +
-                    "Lng: " + location.getLongitude());
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
 
-            mLocation = location;
-            LatLng userLocation = new LatLng(location.getLatitude(),location.getLongitude());
-            setMarker(userLocation,"Here we are");
+                Log.d("tag", "Lat: " + latitude + "\n" +
+                        "Lng: " + longitude);
+
+                mLocation = location;
         }
     }
 
@@ -131,4 +135,15 @@ public class MapsActivity extends FragmentActivity {
         mMap.addMarker(new MarkerOptions().position(_latLng).title(_title));
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 0, 0, mCustomLocationListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mLocationManager.removeUpdates(mCustomLocationListener);
+    }
 }
