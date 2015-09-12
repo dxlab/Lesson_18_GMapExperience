@@ -43,12 +43,17 @@ public class MapsActivity extends FragmentActivity {
         super.onResume();
         setUpMapIfNeeded();
         Log.d("maptag", "onResume");
-        mLocation  = mMap.getMyLocation();
-        if (mLocation!=null) {
+
+        Criteria criteria = new Criteria();
+        String provider = mLocationManager.getBestProvider(criteria, false);
+        mLocation = mLocationManager.getLastKnownLocation(provider);
+
+       // mLocation = mMap.getMyLocation();
+        if (mLocation != null) {
             double latitude = mLocation.getLatitude();
             double longitude = mLocation.getLongitude();
             LatLng latLng = new LatLng(latitude, longitude);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
         }
     }
 
