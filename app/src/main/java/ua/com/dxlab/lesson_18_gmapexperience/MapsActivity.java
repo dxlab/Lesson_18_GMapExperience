@@ -1,27 +1,25 @@
 package ua.com.dxlab.lesson_18_gmapexperience;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.location.Criteria;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity {
+
+    public static final double START_LATITUDE = 48.6208;
+    public static final double START_LONGITUDE = 22.287883;
+    public static final String KEY_LAT = "LAT";
+    public static final String KEY_LONG = "LONG";
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private CustomLocationListener mCustomLocationListener;
@@ -42,19 +40,16 @@ public class MapsActivity extends FragmentActivity {
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
-        Log.d("maptag", "onResume");
+        //Log.d("maptag", "onResume");
 
-        Criteria criteria = new Criteria();
-        String provider = mLocationManager.getBestProvider(criteria, false);
-        mLocation = mLocationManager.getLastKnownLocation(provider);
 
-       // mLocation = mMap.getMyLocation();
-        if (mLocation != null) {
-            double latitude = mLocation.getLatitude();
-            double longitude = mLocation.getLongitude();
-            LatLng latLng = new LatLng(latitude, longitude);
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
-        }
+        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        double latitude = (double) sharedPreferences.getFloat(KEY_LAT,(float) START_LATITUDE);
+        double longitude = (double) sharedPreferences.getFloat(KEY_LONG, (float) START_LONGITUDE);
+
+        LatLng latLng = new LatLng(latitude, longitude);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+
     }
 
     /**
@@ -97,15 +92,13 @@ public class MapsActivity extends FragmentActivity {
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setMyLocationEnabled(true);
 
-
-
     }
 
     public void setCurrentLocation(Location location) {
         if (location != null) {
 
-            Log.d("maptag", "Lat: " + location.getLatitude() + "\n" +
-                    "Lng: " + location.getLongitude());
+            /*Log.d("maptag", "Lat: " + location.getLatitude() + "\n" +
+                    "Lng: " + location.getLongitude());*/
 
             mLocation = location;
         }
@@ -123,8 +116,16 @@ public class MapsActivity extends FragmentActivity {
 
     @Override
     protected void onStop() {
-        super.onStop();
         mLocationManager.removeUpdates(mCustomLocationListener);
+
+        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putFloat(KEY_LAT, (float) mLocation.getLatitude());
+        editor.putFloat(KEY_LONG, (float) mLocation.getLongitude());
+
+        editor.commit();
+        super.onStop();
     }
 
 }
