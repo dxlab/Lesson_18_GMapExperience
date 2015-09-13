@@ -5,6 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import ua.com.dxlab.lesson_18_gmapexperience.model.MarkerItem;
 
@@ -68,8 +72,79 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
         if (cursor != null)
             cursor.moveToFirst();
 
-        MarkerItem contactItem = new MarkerItem(Integer.parseInt(cursor.getString(0)),
-                cursor.getString(1), cursor.getString(2), cursor.getString(3));
-        return contactItem;
+        MarkerItem markerItem = new MarkerItem(Integer.parseInt(cursor.getString(0)),
+                cursor.getString(1), cursor.getDouble(2), cursor.getDouble(3), Boolean.parseBoolean(cursor.getString(4)), cursor.getString(5));
+        return markerItem;
+    }
+
+
+    // Getting All Markers
+    public List<MarkerItem> getAllContacts() {
+        List<MarkerItem> contactItemList = new ArrayList<MarkerItem>();
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_MARKERS;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                MarkerItem markerItem = new MarkerItem();
+                markerItem.setID(Integer.parseInt(cursor.getString(0)));
+                markerItem.setTitle(cursor.getString(1));
+                markerItem.setLatitude(cursor.getDouble(2));
+                markerItem.setLongitude(cursor.getDouble(3));
+                markerItem.setCustomized(Boolean.parseBoolean(cursor.getString(4)));
+                markerItem.setImageURI(cursor.getString(5));
+                // Adding markerItem to list
+                contactItemList.add(markerItem);
+                Log.d("extrdata:", cursor.getString(0) + " | " +
+                        cursor.getString(1) + " | " +
+                        cursor.getString(2) + " | " +
+                        cursor.getString(3) + " | " +
+                        cursor.getString(4) + " | " +
+                        cursor.getString(5));
+            } while (cursor.moveToNext());
+        }
+
+        return contactItemList;
+    }
+
+    public int updateContact(MarkerItem _markerItem) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_TITLE, _markerItem.getTitle());
+        values.put(KEY_LATITUDE, _markerItem.getLatitude());
+        values.put(KEY_LONGITUDE, _markerItem.getLongitude());
+        values.put(KEY_IS_CUSTOMIZED, _markerItem.isCustomized());
+        values.put(KEY_IMAGE_URI, _markerItem.getImageURI());
+
+        return db.update(TABLE_MARKERS, values, KEY_ID + " = ?",
+                new String[] { String.valueOf(_markerItem.getID()) });
+    }
+
+    public void deleteContact(MarkerItem _markerItem) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_MARKERS, KEY_ID + " = ?",
+                new String[]{String.valueOf(_markerItem.getID())});
+        db.close();
+    }
+
+    public int getContactsCount() {
+        String countQuery = "SELECT  * FROM " + TABLE_MARKERS;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+        int cnt = cursor.getCount();
+        cursor.close();
+
+        return cnt;
+    }
+
+    public void deleteAllContacts() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_MARKERS, null, null);
+        db.close();
     }
 }
