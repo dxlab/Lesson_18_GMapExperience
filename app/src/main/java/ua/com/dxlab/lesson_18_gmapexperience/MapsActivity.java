@@ -6,7 +6,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -41,7 +40,6 @@ public class MapsActivity extends FragmentActivity {
         super.onResume();
         setUpMapIfNeeded();
         //Log.d("maptag", "onResume");
-
 
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
         double latitude = (double) sharedPreferences.getFloat(KEY_LAT,(float) START_LATITUDE);
