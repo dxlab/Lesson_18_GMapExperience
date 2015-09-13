@@ -1,4 +1,4 @@
-package ua.com.dxlab.lesson_18_gmapexperience.model.sqlite;
+package ua.com.dxlab.lesson_18_gmapexperience.model.helpers;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -50,7 +50,7 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    void addMarker(MarkerItem _markerItem) {
+    public void addMarker(MarkerItem _markerItem) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -61,9 +61,10 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
         values.put(KEY_IMAGE_URI, _markerItem.getImageURI());
 
         db.insert(TABLE_MARKERS, null, values);
-        db.close();     }
+        db.close();
+    }
 
-    MarkerItem getContact(int _id) {
+    MarkerItem getMarker(int _id) {
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.query(TABLE_MARKERS, new String[] { KEY_ID,
@@ -79,8 +80,8 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
 
 
     // Getting All Markers
-    public List<MarkerItem> getAllContacts() {
-        List<MarkerItem> contactItemList = new ArrayList<MarkerItem>();
+    public List<MarkerItem> getAllMarkers() {
+        List<MarkerItem> markerItemList = new ArrayList<MarkerItem>();
         // Select All Query
         String selectQuery = "SELECT  * FROM " + TABLE_MARKERS;
 
@@ -98,7 +99,7 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
                 markerItem.setCustomized(Boolean.parseBoolean(cursor.getString(4)));
                 markerItem.setImageURI(cursor.getString(5));
                 // Adding markerItem to list
-                contactItemList.add(markerItem);
+                markerItemList.add(markerItem);
                 Log.d("extrdata:", cursor.getString(0) + " | " +
                         cursor.getString(1) + " | " +
                         cursor.getString(2) + " | " +
@@ -108,10 +109,10 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        return contactItemList;
+        return markerItemList;
     }
 
-    public int updateContact(MarkerItem _markerItem) {
+    public int updateMarker(MarkerItem _markerItem) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -125,14 +126,14 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
                 new String[] { String.valueOf(_markerItem.getID()) });
     }
 
-    public void deleteContact(MarkerItem _markerItem) {
+    public void deleteMarker(MarkerItem _markerItem) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_MARKERS, KEY_ID + " = ?",
                 new String[]{String.valueOf(_markerItem.getID())});
         db.close();
     }
 
-    public int getContactsCount() {
+    public int getMarkersCount() {
         String countQuery = "SELECT  * FROM " + TABLE_MARKERS;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
@@ -142,7 +143,7 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
         return cnt;
     }
 
-    public void deleteAllContacts() {
+    public void deleteAllMarkers() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_MARKERS, null, null);
         db.close();

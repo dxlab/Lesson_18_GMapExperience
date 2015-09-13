@@ -10,20 +10,28 @@ import android.support.v4.app.FragmentActivity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity {
+import java.util.List;
+
+import ua.com.dxlab.lesson_18_gmapexperience.model.MarkerItem;
+import ua.com.dxlab.lesson_18_gmapexperience.model.helpers.DBMarkersOpenHelper;
+
+public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapClickListener {
 
     public static final double START_LATITUDE = 48.6208;
     public static final double START_LONGITUDE = 22.287883;
     public static final String KEY_LAT = "LAT";
     public static final String KEY_LONG = "LONG";
+    public static final String GOOGLE_MAP_MARKERS_DB_NAME = "GMapMarkersDB";
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private CustomLocationListener mCustomLocationListener;
     private LocationManager mLocationManager;
     private Location mLocation;
+    private DBMarkersOpenHelper mDBMarkerOpenHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +39,7 @@ public class MapsActivity extends FragmentActivity {
         setContentView(R.layout.activity_maps);
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         mCustomLocationListener = new CustomLocationListener(this);
+        mDBMarkerOpenHelper = new DBMarkersOpenHelper(MapsActivity.this, GOOGLE_MAP_MARKERS_DB_NAME, null, 1);
         setUpMapIfNeeded();
     }
 
@@ -89,7 +98,22 @@ public class MapsActivity extends FragmentActivity {
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setMyLocationEnabled(true);
+        mMap.setOnMapClickListener(this);
 
+        List<MarkerItem> markerItemList =  mDBMarkerOpenHelper.getAllMarkers();
+
+    }
+
+
+    private void recallMarkers(List<MarkerItem> _markerItemList) {
+
+    }
+
+    @Override
+    public void onMapClick(LatLng _latLng) {
+        String title = "Here we are:  " + String.format("%1$s | %2$s",
+                String.valueOf(_latLng.latitude), String.valueOf(_latLng.longitude));
+        setMarker(_latLng, title, false);
     }
 
     public void setCurrentLocation(Location location) {
@@ -102,8 +126,14 @@ public class MapsActivity extends FragmentActivity {
         }
     }
 
-    private void setMarker(LatLng _latLng, String _title) {
-        mMap.addMarker(new MarkerOptions().position(_latLng).title(_title));
+    private void setMarker(LatLng _latLng, String _title, boolean _isCustomized) {
+        mMap.addMarker(new MarkerOptions().position(_latLng).
+                title(_title).
+                snippet("Marker selected").
+                icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+        MarkerItem markerItem = new MarkerItem(_title, _latLng.latitude, _latLng.longitude, _isCustomized, "defaultMarker");
+
+        mDBMarkerOpenHelper.addMarker(markerItem);
     }
 
     @Override
