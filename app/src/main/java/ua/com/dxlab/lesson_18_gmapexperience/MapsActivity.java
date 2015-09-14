@@ -1,6 +1,8 @@
 package ua.com.dxlab.lesson_18_gmapexperience;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
@@ -8,7 +10,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -38,16 +43,71 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
     private LocationManager mLocationManager;
     private Location mLocation;
     private DBMarkersOpenHelper mDBMarkerOpenHelper;
+    private Button mBtnDelAll;
+    private Button mBtnShowLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        extendUI();
+
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         mCustomLocationListener = new CustomLocationListener(this);
         mDBMarkerOpenHelper = new DBMarkersOpenHelper(MapsActivity.this, GOOGLE_MAP_MARKERS_DB_NAME, null, 1);
+
         setUpMapIfNeeded();
-      //  mDBMarkerOpenHelper.deleteAllMarkers();
+     }
+
+    private void extendUI() {
+        mBtnDelAll = new Button(this);
+        mBtnDelAll.setText(R.string.delete_all);
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        addContentView(mBtnDelAll, params);
+
+        mBtnShowLocation = new Button(this);
+        mBtnShowLocation.setText(R.string.show_location);
+
+        addContentView(mBtnShowLocation, params);
+
+        mBtnDelAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteMarkersDialog();
+            }
+        });
+
+        mBtnShowLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+    }
+
+
+    private void deleteMarkersDialog() {
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        new AsyncTaskDeleteAllMarkersDB().execute();
+                        mMap.clear();
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        //No button clicked
+                        break;
+                }
+                dialog.dismiss();
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+        builder.setMessage(R.string.are_you_sure).setPositiveButton(R.string.yes_answer, dialogClickListener)
+                .setNegativeButton(R.string.no_answer, dialogClickListener).show();
     }
 
 
@@ -107,7 +167,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         mMap.setMyLocationEnabled(true);
         mMap.setOnMapClickListener(this);
 
-        new AsyncTaskRecallMarkersDB().execute(mDBMarkerOpenHelper.getAllMarkers());
+        new AsyncTaskRecallMarkersDB().execute();
     }
 
 
@@ -120,6 +180,8 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
 
         MarkerItem markerItem = new MarkerItem(title, _latLng.latitude, _latLng.longitude, isCustomized, DEFAULT_MARKER);
          new AsyncTaskAddMarkerDB().execute(markerItem);
+
+        Toast.makeText(MapsActivity.this,"LONG CLICK TO CREATE CUSTOM MARKER",Toast.LENGTH_SHORT).show();
     }
 
     public void setCurrentLocation(Location location) {
@@ -163,15 +225,35 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
     }
 
 
-    private class AsyncTaskAddMarkerDB extends AsyncTask<MarkerItem,Void,Void>{
+    private class AsyncTaskAddMarkerDB extends AsyncTask<MarkerItem,Void,Boolean>{
         @Override
-        protected Void doInBackground(MarkerItem... params) {
+        protected Boolean doInBackground(MarkerItem... params) {
             mDBMarkerOpenHelper.addMarker(params[0]);
-            return null;
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            mBtnDelAll.setEnabled(result);
+            super.onPostExecute(result);
         }
     }
 
-    private class AsyncTaskRecallMarkersDB extends AsyncTask<List<MarkerItem>, MarkerItem, Void>{
+    private class AsyncTaskDeleteAllMarkersDB extends AsyncTask<Void,Void,Boolean>{
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            mDBMarkerOpenHelper.deleteAllMarkers();
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            mBtnDelAll.setEnabled(result);
+            super.onPostExecute(result);
+        }
+    }
+
+    private class AsyncTaskRecallMarkersDB extends AsyncTask<Void, MarkerItem, Void>{
         private final FragmentManager mFManager;
         private LoadingDialog mLoadingDialog;
 
@@ -181,8 +263,8 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         }
 
         @Override
-        protected Void doInBackground(List<MarkerItem>... params) {
-            List<MarkerItem> markerItemsList = params[0];
+        protected Void doInBackground(Void... params) {
+            List<MarkerItem> markerItemsList = mDBMarkerOpenHelper.getAllMarkers();
             if (markerItemsList.size()>0) {
                 for (int i = 0; i < markerItemsList.size(); i++) {
                     publishProgress(markerItemsList.get(i));
@@ -202,6 +284,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
 
         @Override
         protected void onPostExecute(Void result) {
+            mBtnDelAll.setEnabled(mDBMarkerOpenHelper.getMarkersCount()>0 ? true : false);
             dismissLoadingDialog();
         }
 
