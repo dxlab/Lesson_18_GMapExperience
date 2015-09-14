@@ -96,7 +96,7 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
                 markerItem.setTitle(cursor.getString(1));
                 markerItem.setLatitude(cursor.getDouble(2));
                 markerItem.setLongitude(cursor.getDouble(3));
-                markerItem.setCustomized(Boolean.parseBoolean(cursor.getString(4)));
+                markerItem.setCustomized((cursor.getInt(4)>0) ? true : false);
                 markerItem.setImageURI(cursor.getString(5));
                 // Adding markerItem to list
                 markerItemList.add(markerItem);

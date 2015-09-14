@@ -1,10 +1,13 @@
 package ua.com.dxlab.lesson_18_gmapexperience;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -13,9 +16,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +33,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 import java.util.Locale;
@@ -225,11 +233,18 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         }
     }
 
-    private void setMarker(LatLng _latLng, String _title, boolean _isCustomized, String _imgURI) {
+    private void setMarker(LatLng _latLng, String _title, boolean _isCustomized, String _imgURI){
 
-        BitmapDescriptor bd = (!_isCustomized) ?
-                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE) :
-                BitmapDescriptorFactory.fromPath(_imgURI);
+        BitmapDescriptor bd = null;
+        if (!_isCustomized) {
+            bd = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+        } else {
+            View markerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.custom_marker, null);
+            ImageView imageView = (ImageView) markerView.findViewById(R.id.imgView_CM);
+            //Log.d("extrdata", " "+_imgURI);
+            Picasso.with(this).load(_imgURI).into(imageView);
+            bd = BitmapDescriptorFactory.fromBitmap(createDrawableFromView(this, markerView));
+        }
 
         String snippetText = (!_isCustomized) ?
                 getResources().getString(R.string.standard_marker) :
@@ -239,6 +254,22 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
                 title(_title).
                 snippet(snippetText).
                 icon(bd));
+    }
+
+    // Convert a view to bitmap
+    private static Bitmap createDrawableFromView(Context context, View view) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        view.measure(displayMetrics.widthPixels, displayMetrics.heightPixels);
+        view.layout(0, 0, displayMetrics.widthPixels, displayMetrics.heightPixels);
+        view.buildDrawingCache();
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+
+        return bitmap;
     }
 
     @Override
