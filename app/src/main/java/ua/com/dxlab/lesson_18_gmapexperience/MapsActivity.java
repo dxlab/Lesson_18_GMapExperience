@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
@@ -12,7 +14,6 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +27,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
+import java.util.Locale;
 
 import ua.com.dxlab.lesson_18_gmapexperience.model.MarkerItem;
 import ua.com.dxlab.lesson_18_gmapexperience.model.helpers.DBMarkersOpenHelper;
@@ -47,6 +49,10 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
     private DBMarkersOpenHelper mDBMarkerOpenHelper;
     private Button mBtnDelAll;
     private Button mBtnShowLocation;
+    private TextView mTxtViewLatitude;
+    private TextView mTxtViewLongitude;
+    private TextView mTxtViewCity;
+    private TextView mTxtViewAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +66,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         mDBMarkerOpenHelper = new DBMarkersOpenHelper(MapsActivity.this, GOOGLE_MAP_MARKERS_DB_NAME, null, 1);
 
         setUpMapIfNeeded();
-     }
+    }
 
     private void extendUI() {
         mBtnDelAll = (Button) findViewById(R.id.btnDelAll_AM);
@@ -72,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                switch (which){
+                switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         new AsyncTaskDeleteAllMarkersDB().execute();
                         mMap.clear();
@@ -96,17 +102,12 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         dialog.setContentView(R.layout.show_location);
         dialog.setTitle(R.string.your_current_location);
 
-        TextView txtViewLatitude = (TextView) dialog.findViewById(R.id.txtViewLatitudeValue_SL);
-        txtViewLatitude.setText(": " + mLocation.getLatitude());
+        mTxtViewLatitude = (TextView) dialog.findViewById(R.id.txtViewLatitudeValue_SL);
+        mTxtViewLongitude = (TextView) dialog.findViewById(R.id.txtViewLongitudeValue_SL);
+        mTxtViewCity = (TextView) dialog.findViewById(R.id.txtViewCityValue_SL);
+        mTxtViewAddress = (TextView) dialog.findViewById(R.id.txtViewAddressValue_SL);
 
-        TextView txtViewLongitude = (TextView) dialog.findViewById(R.id.txtViewLongitudeValue_SL);
-        txtViewLongitude.setText(": "+mLocation.getLongitude());
-
-        TextView txtViewCity = (TextView) dialog.findViewById(R.id.txtViewCityValue_SL);
-
-        TextView txtViewAddress = (TextView) dialog.findViewById(R.id.txtViewAddressValue_SL);
-
-
+        new AsyncTaskGeoLocator().execute();
 
         Button dialogButton = (Button) dialog.findViewById(R.id.btnOk_SL);
         // if button is clicked, close the custom dialog
@@ -116,7 +117,6 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
                 dialog.dismiss();
             }
         });
-
         dialog.show();
     }
 
@@ -128,7 +128,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         //Log.d("maptag", "onResume");
 
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-        double latitude = (double) sharedPreferences.getFloat(KEY_LAT,(float) START_LATITUDE);
+        double latitude = (double) sharedPreferences.getFloat(KEY_LAT, (float) START_LATITUDE);
         double longitude = (double) sharedPreferences.getFloat(KEY_LONG, (float) START_LONGITUDE);
 
         LatLng latLng = new LatLng(latitude, longitude);
@@ -183,15 +183,15 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
 
     @Override
     public void onMapClick(LatLng _latLng) {
-        String title = "Here we are:  " + String.format("%1$s | %2$s",
+        final String title = getResources().getString(R.string.here_we_are) + ": " +String.format("%1$s | %2$s",
                 String.valueOf(_latLng.latitude), String.valueOf(_latLng.longitude));
         final boolean isCustomized = false;
         setMarker(_latLng, title, isCustomized, DEFAULT_MARKER);
 
         MarkerItem markerItem = new MarkerItem(title, _latLng.latitude, _latLng.longitude, isCustomized, DEFAULT_MARKER);
-         new AsyncTaskAddMarkerDB().execute(markerItem);
+        new AsyncTaskAddMarkerDB().execute(markerItem);
 
-        Toast.makeText(MapsActivity.this,"LONG CLICK TO CREATE CUSTOM MARKER",Toast.LENGTH_SHORT).show();
+        Toast.makeText(MapsActivity.this, R.string.long_click, Toast.LENGTH_SHORT).show();
     }
 
     public void setCurrentLocation(Location location) {
@@ -206,11 +206,13 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
 
     private void setMarker(LatLng _latLng, String _title, boolean _isCustomized, String _imgURI) {
 
-        BitmapDescriptor bd = (_imgURI.equals(DEFAULT_MARKER)) ? BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE) : null;
+        BitmapDescriptor bd = (!_isCustomized) ?
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE) :
+                BitmapDescriptorFactory.fromPath(_imgURI);
 
         mMap.addMarker(new MarkerOptions().position(_latLng).
                 title(_title).
-                snippet("Marker selected").
+                snippet(getResources().getString(R.string.marker_selected)).
                 icon(bd));
     }
 
@@ -235,7 +237,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
     }
 
 
-    private class AsyncTaskAddMarkerDB extends AsyncTask<MarkerItem,Void,Boolean>{
+    private class AsyncTaskAddMarkerDB extends AsyncTask<MarkerItem, Void, Boolean> {
         @Override
         protected Boolean doInBackground(MarkerItem... params) {
             mDBMarkerOpenHelper.addMarker(params[0]);
@@ -249,7 +251,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         }
     }
 
-    private class AsyncTaskDeleteAllMarkersDB extends AsyncTask<Void,Void,Boolean>{
+    private class AsyncTaskDeleteAllMarkersDB extends AsyncTask<Void, Void, Boolean> {
         @Override
         protected Boolean doInBackground(Void... params) {
             mDBMarkerOpenHelper.deleteAllMarkers();
@@ -263,7 +265,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         }
     }
 
-    private class AsyncTaskRecallMarkersDB extends AsyncTask<Void, MarkerItem, Void>{
+    private class AsyncTaskRecallMarkersDB extends AsyncTask<Void, MarkerItem, Void> {
         private final FragmentManager mFManager;
         private LoadingDialog mLoadingDialog;
 
@@ -275,7 +277,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         @Override
         protected Void doInBackground(Void... params) {
             List<MarkerItem> markerItemsList = mDBMarkerOpenHelper.getAllMarkers();
-            if (markerItemsList.size()>0) {
+            if (markerItemsList.size() > 0) {
                 for (int i = 0; i < markerItemsList.size(); i++) {
                     publishProgress(markerItemsList.get(i));
                 }
@@ -294,7 +296,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
 
         @Override
         protected void onPostExecute(Void result) {
-            mBtnDelAll.setEnabled(mDBMarkerOpenHelper.getMarkersCount()>0 ? true : false);
+            mBtnDelAll.setEnabled(mDBMarkerOpenHelper.getMarkersCount() > 0 ? true : false);
             dismissLoadingDialog();
         }
 
@@ -313,6 +315,41 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         private void dismissLoadingDialog() {
             //Log.d("extrdata:", "Dismissed");
             mLoadingDialog.dismiss();
+        }
+    }
+
+    private class AsyncTaskGeoLocator extends AsyncTask<Void, String, Void> {
+        private static final String WAITING_FOR_LOCATION = "Waiting for Location";
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+
+                Geocoder geo = new Geocoder(MapsActivity.this.getApplicationContext(), Locale.getDefault());
+                List<Address> addresses = geo.getFromLocation(mLocation.getLatitude(), mLocation.getLongitude(), 1);
+                if (addresses.isEmpty()) {
+                    publishProgress(WAITING_FOR_LOCATION, WAITING_FOR_LOCATION);
+                } else {
+                    if (addresses.size() > 0) {
+                        publishProgress(": " + addresses.get(0).getAddressLine(0),
+                                ": " + addresses.get(0).getLocality()
+                                + ", " + addresses.get(0).getAdminArea()
+                                + ", " + addresses.get(0).getCountryName());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace(); // getFromLocation() may sometimes fail
+            }
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+            mTxtViewLatitude.setText(": " + mLocation.getLatitude());
+            mTxtViewLongitude.setText(": " + mLocation.getLongitude());
+            mTxtViewAddress.setText(values[0]);
+            mTxtViewCity.setText(values[1]);
         }
     }
 }

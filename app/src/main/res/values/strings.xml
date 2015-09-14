@@ -12,4 +12,7 @@
     <string name="longitude">Longitude</string>
     <string name="your_current_location">Your current location</string>
     <string name="ok">Ok</string>
+    <string name="long_click">LONG CLICK TO CREATE CUSTOM MARKER</string>
+    <string name="marker_selected">Marker selected</string>
+    <string name="here_we_are">Here we are</string>
 </resources>
