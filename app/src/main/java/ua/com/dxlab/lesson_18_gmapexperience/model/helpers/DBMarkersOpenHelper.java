@@ -79,7 +79,10 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
     }
 
 
-    // Getting All Markers
+    /**
+     * Getting all markers
+     * @return
+     */
     public List<MarkerItem> getAllMarkers() {
         List<MarkerItem> markerItemList = new ArrayList<MarkerItem>();
         // Select All Query
@@ -146,6 +149,7 @@ public class DBMarkersOpenHelper extends SQLiteOpenHelper {
     public void deleteAllMarkers() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_MARKERS, null, null);
+        db.delete("SQLITE_SEQUENCE","NAME = ?",new String[]{TABLE_MARKERS});
         db.close();
     }
 }
