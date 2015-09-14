@@ -7,6 +7,8 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -20,6 +22,7 @@ import java.util.List;
 
 import ua.com.dxlab.lesson_18_gmapexperience.model.MarkerItem;
 import ua.com.dxlab.lesson_18_gmapexperience.model.helpers.DBMarkersOpenHelper;
+import ua.com.dxlab.lesson_18_gmapexperience.view.LoadingDialog;
 
 public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapClickListener {
 
@@ -169,6 +172,14 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
     }
 
     private class AsyncTaskRecallMarkersDB extends AsyncTask<List<MarkerItem>, MarkerItem, Void>{
+        private final FragmentManager mFManager;
+        private LoadingDialog mLoadingDialog;
+
+        public AsyncTaskRecallMarkersDB() {
+            mFManager = getSupportFragmentManager();
+            mLoadingDialog = new LoadingDialog();
+        }
+
         @Override
         protected Void doInBackground(List<MarkerItem>... params) {
             List<MarkerItem> markerItemsList = params[0];
@@ -184,9 +195,31 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         protected void onProgressUpdate(MarkerItem... values) {
             super.onProgressUpdate(values);
             setMarker(new LatLng(values[0].getLatitude(),
-                                values[0].getLongitude()),
-                                values[0].getTitle(),
-                                values[0].isCustomized(), values[0].getImageURI());
+                            values[0].getLongitude()),
+                    values[0].getTitle(),
+                    values[0].isCustomized(), values[0].getImageURI());
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            dismissLoadingDialog();
+        }
+
+        @Override
+        protected void onPreExecute() {
+            showLoadingDialog();
+        }
+
+
+        private void showLoadingDialog() {
+            mLoadingDialog.show(mFManager, "Loading");
+            //Log.d("extrdata:", "Shown");
+
+        }
+
+        private void dismissLoadingDialog() {
+            //Log.d("extrdata:", "Dismissed");
+            mLoadingDialog.dismiss();
         }
     }
 }
