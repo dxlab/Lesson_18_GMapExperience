@@ -4,12 +4,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -26,6 +28,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
     public static final String KEY_LAT = "LAT";
     public static final String KEY_LONG = "LONG";
     public static final String GOOGLE_MAP_MARKERS_DB_NAME = "GMapMarkersDB";
+    public static final String DEFAULT_MARKER = "defaultMarker";
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private CustomLocationListener mCustomLocationListener;
@@ -41,6 +44,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         mCustomLocationListener = new CustomLocationListener(this);
         mDBMarkerOpenHelper = new DBMarkersOpenHelper(MapsActivity.this, GOOGLE_MAP_MARKERS_DB_NAME, null, 1);
         setUpMapIfNeeded();
+      //  mDBMarkerOpenHelper.deleteAllMarkers();
     }
 
 
@@ -100,20 +104,19 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         mMap.setMyLocationEnabled(true);
         mMap.setOnMapClickListener(this);
 
-        List<MarkerItem> markerItemList =  mDBMarkerOpenHelper.getAllMarkers();
-
+        new AsyncTaskRecallMarkersDB().execute(mDBMarkerOpenHelper.getAllMarkers());
     }
 
-
-    private void recallMarkers(List<MarkerItem> _markerItemList) {
-
-    }
 
     @Override
     public void onMapClick(LatLng _latLng) {
         String title = "Here we are:  " + String.format("%1$s | %2$s",
                 String.valueOf(_latLng.latitude), String.valueOf(_latLng.longitude));
-        setMarker(_latLng, title, false);
+        final boolean isCustomized = false;
+        setMarker(_latLng, title, isCustomized, DEFAULT_MARKER);
+
+        MarkerItem markerItem = new MarkerItem(title, _latLng.latitude, _latLng.longitude, isCustomized, DEFAULT_MARKER);
+         new AsyncTaskAddMarkerDB().execute(markerItem);
     }
 
     public void setCurrentLocation(Location location) {
@@ -126,14 +129,14 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         }
     }
 
-    private void setMarker(LatLng _latLng, String _title, boolean _isCustomized) {
+    private void setMarker(LatLng _latLng, String _title, boolean _isCustomized, String _imgURI) {
+
+        BitmapDescriptor bd = (_imgURI.equals(DEFAULT_MARKER)) ? BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE) : null;
+
         mMap.addMarker(new MarkerOptions().position(_latLng).
                 title(_title).
                 snippet("Marker selected").
-                icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
-        MarkerItem markerItem = new MarkerItem(_title, _latLng.latitude, _latLng.longitude, _isCustomized, "defaultMarker");
-
-        mDBMarkerOpenHelper.addMarker(markerItem);
+                icon(bd));
     }
 
     @Override
@@ -156,4 +159,34 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         super.onStop();
     }
 
+
+    private class AsyncTaskAddMarkerDB extends AsyncTask<MarkerItem,Void,Void>{
+        @Override
+        protected Void doInBackground(MarkerItem... params) {
+            mDBMarkerOpenHelper.addMarker(params[0]);
+            return null;
+        }
+    }
+
+    private class AsyncTaskRecallMarkersDB extends AsyncTask<List<MarkerItem>, MarkerItem, Void>{
+        @Override
+        protected Void doInBackground(List<MarkerItem>... params) {
+            List<MarkerItem> markerItemsList = params[0];
+            if (markerItemsList.size()>0) {
+                for (int i = 0; i < markerItemsList.size(); i++) {
+                    publishProgress(markerItemsList.get(i));
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(MarkerItem... values) {
+            super.onProgressUpdate(values);
+            setMarker(new LatLng(values[0].getLatitude(),
+                                values[0].getLongitude()),
+                                values[0].getTitle(),
+                                values[0].isCustomized(), values[0].getImageURI());
+        }
+    }
 }
