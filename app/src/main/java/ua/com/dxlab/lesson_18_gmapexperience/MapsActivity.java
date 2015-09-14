@@ -61,33 +61,12 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
      }
 
     private void extendUI() {
-        mBtnDelAll = new Button(this);
-        mBtnDelAll.setText(R.string.delete_all);
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        addContentView(mBtnDelAll, params);
-
-        mBtnShowLocation = new Button(this);
-        mBtnShowLocation.setText(R.string.show_location);
-
-        addContentView(mBtnShowLocation, params);
-
-        mBtnDelAll.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteMarkersDialog();
-            }
-        });
-
-        mBtnShowLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
+        mBtnDelAll = (Button) findViewById(R.id.btnDelAll_AM);
+        mBtnShowLocation = (Button) findViewById(R.id.btnShowLocation_AM);
     }
 
 
-    private void deleteMarkersDialog() {
+    public void onBtnDelAllClick(View view) {
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
