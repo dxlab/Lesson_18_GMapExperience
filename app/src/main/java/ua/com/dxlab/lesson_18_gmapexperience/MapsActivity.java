@@ -13,6 +13,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -31,9 +32,10 @@ import java.util.Locale;
 
 import ua.com.dxlab.lesson_18_gmapexperience.model.MarkerItem;
 import ua.com.dxlab.lesson_18_gmapexperience.model.helpers.DBMarkersOpenHelper;
+import ua.com.dxlab.lesson_18_gmapexperience.view.CustomMarkerSelectDialog;
 import ua.com.dxlab.lesson_18_gmapexperience.view.LoadingDialog;
 
-public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapClickListener {
+public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener {
 
     public static final double START_LATITUDE = 48.6208;
     public static final double START_LONGITUDE = 22.287883;
@@ -176,10 +178,29 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setMyLocationEnabled(true);
         mMap.setOnMapClickListener(this);
+        mMap.setOnMapLongClickListener(this);
 
         new AsyncTaskRecallMarkersDB().execute();
     }
 
+    @Override
+    public void onMapLongClick(LatLng _latLng) {
+        CustomMarkerSelectDialog customMarkerSelectDialog = new CustomMarkerSelectDialog();
+        customMarkerSelectDialog.setLatLng(_latLng);
+        customMarkerSelectDialog.show(getSupportFragmentManager(), getResources().getString(R.string.set_custom_marker_fileds));
+
+    }
+
+    public void onCustomMarkerSelectDialogValue(MarkerItem _markerItem) {
+        Log.d("imgURI", _markerItem.getImageURI());
+        setMarker(new LatLng(_markerItem.getLatitude(),
+                        _markerItem.getLongitude()),
+                _markerItem.getTitle(),
+                _markerItem.isCustomized(),
+                _markerItem.getImageURI());
+
+        new AsyncTaskAddMarkerDB().execute(_markerItem);
+    }
 
     @Override
     public void onMapClick(LatLng _latLng) {
@@ -210,9 +231,13 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
                 BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE) :
                 BitmapDescriptorFactory.fromPath(_imgURI);
 
+        String snippetText = (!_isCustomized) ?
+                getResources().getString(R.string.standard_marker) :
+                getResources().getString(R.string.customized_marker);
+
         mMap.addMarker(new MarkerOptions().position(_latLng).
                 title(_title).
-                snippet(getResources().getString(R.string.marker_selected)).
+                snippet(snippetText).
                 icon(bd));
     }
 
@@ -235,7 +260,6 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         editor.commit();
         super.onStop();
     }
-
 
     private class AsyncTaskAddMarkerDB extends AsyncTask<MarkerItem, Void, Boolean> {
         @Override

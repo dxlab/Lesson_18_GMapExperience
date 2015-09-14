@@ -15,4 +15,11 @@
     <string name="long_click">LONG CLICK TO CREATE CUSTOM MARKER</string>
     <string name="marker_selected">Marker selected</string>
     <string name="here_we_are">Here we are</string>
+    <string name="type_marker_text">Type marker text here:</string>
+    <string name="standard_marker">Standard marker</string>
+    <string name="customized_marker">Customized marker</string>
+    <string name="select_marker_image">Select marker image</string>
+    <string name="select_image">Select image</string>
+    <string name="cancel">Cancel</string>
+    <string name="set_custom_marker_fileds">Set custom marker fields</string>
 </resources>
