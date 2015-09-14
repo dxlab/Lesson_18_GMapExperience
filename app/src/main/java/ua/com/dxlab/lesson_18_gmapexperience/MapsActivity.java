@@ -1,6 +1,7 @@
 package ua.com.dxlab.lesson_18_gmapexperience;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -13,6 +14,7 @@ import android.support.v4.app.FragmentManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -66,7 +68,7 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
     }
 
 
-    public void onBtnDelAllClick(View view) {
+    public void onBtnDelAllClick(View _view) {
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -87,6 +89,35 @@ public class MapsActivity extends FragmentActivity implements GoogleMap.OnMapCli
         AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
         builder.setMessage(R.string.are_you_sure).setPositiveButton(R.string.yes_answer, dialogClickListener)
                 .setNegativeButton(R.string.no_answer, dialogClickListener).show();
+    }
+
+    public void onShowLocationBtnClick(View _view) {
+        final Dialog dialog = new Dialog(MapsActivity.this);
+        dialog.setContentView(R.layout.show_location);
+        dialog.setTitle(R.string.your_current_location);
+
+        TextView txtViewLatitude = (TextView) dialog.findViewById(R.id.txtViewLatitudeValue_SL);
+        txtViewLatitude.setText(": " + mLocation.getLatitude());
+
+        TextView txtViewLongitude = (TextView) dialog.findViewById(R.id.txtViewLongitudeValue_SL);
+        txtViewLongitude.setText(": "+mLocation.getLongitude());
+
+        TextView txtViewCity = (TextView) dialog.findViewById(R.id.txtViewCityValue_SL);
+
+        TextView txtViewAddress = (TextView) dialog.findViewById(R.id.txtViewAddressValue_SL);
+
+
+
+        Button dialogButton = (Button) dialog.findViewById(R.id.btnOk_SL);
+        // if button is clicked, close the custom dialog
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
     }
 
 

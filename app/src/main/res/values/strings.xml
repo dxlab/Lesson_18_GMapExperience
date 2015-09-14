@@ -6,4 +6,10 @@
     <string name="yes_answer">Yes</string>
     <string name="no_answer">No</string>
     <string name="show_location">Show Location</string>
+    <string name="latitude">Latitude</string>
+    <string name="address">Address</string>
+    <string name="city">City</string>
+    <string name="longitude">Longitude</string>
+    <string name="your_current_location">Your current location</string>
+    <string name="ok">Ok</string>
 </resources>
